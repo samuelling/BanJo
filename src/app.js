@@ -142,7 +142,7 @@ const build = { get hold() { return cur('hold'); } };
 function sceneObject() {
   const S = SP(), room = S.ROOMS[scene.room];
   const h = build.hold === 'stand' ? 0.75 : 0.95;
-  const [Lx, Ly] = room.dims;
+  const [Lx, Ly] = room.open ? [12, 8] : room.dims;   // open ground: place the banjo on the map's 12 x 8 m patch
   const mx = Math.min(1.2, Lx * 0.2), my = Math.min(1.2, Ly * 0.2);
   const pos = [Math.max(mx, Math.min(Lx - mx, Lx * scene.gx)), Math.max(my, Math.min(Ly - my, Ly * scene.gy)), h];
   const sh = shadowEngine(), geom = sh.pot ? sh.sceneGeom() : null;
@@ -291,15 +291,27 @@ function drawRoomMap() {
   const X = (x) => G.ox + x * G.k, Y = (y) => G.oy + y * G.k;
   // walls, colored by how reflective they are at 1 kHz
   const wall = (key, x0, y0, x1, y1) => {
-    if (room.open) return;
+    if (room.open || room.walls[key] === 'open') return;
     const a = S.MATERIALS[room.walls[key]].a[3];
     g.strokeStyle = a < 0.15 ? col('--brass') : a < 0.5 ? col('--muted') : col('--faint');
     g.lineWidth = a < 0.15 ? 3 : 2; g.beginPath(); g.moveTo(X(x0), Y(y0)); g.lineTo(X(x1), Y(y1)); g.stroke();
   };
   wall('y0', 0, 0, G.Lx, 0); wall('y1', 0, G.Ly, G.Lx, G.Ly); wall('x0', 0, 0, 0, G.Ly); wall('x1', G.Lx, 0, G.Lx, G.Ly);
   if (room.open) { g.fillStyle = col('--panel'); g.fillRect(X(0), Y(0), G.Lx * G.k, G.Ly * G.k); }
+  if (room.trees) {
+    // a sketch of the stand around the player: trunks at the stand's mean spacing
+    let sd = 99; const rnd = () => { sd = (sd * 16807) % 2147483647; return sd / 2147483647; };
+    g.fillStyle = 'rgba(120,150,95,0.55)';
+    for (let x = 0.5; x < G.Lx; x += room.trees.spacing * 0.5) for (let y = 0.5; y < G.Ly; y += room.trees.spacing * 0.5) {
+      const px = x + (rnd() - 0.5) * room.trees.spacing * 0.5, py = y + (rnd() - 0.5) * room.trees.spacing * 0.5;
+      if (Math.hypot(px - G.Lx * scene.gx, py - G.Ly * scene.gy) < 1.3) continue;
+      g.beginPath(); g.arc(X(px), Y(py), Math.max(1.5, (room.trees.r[0] + (room.trees.r[1] - room.trees.r[0]) * rnd()) * G.k), 0, 7); g.fill();
+    }
+  }
   g.fillStyle = col('--faint'); g.font = '10px "JetBrains Mono", monospace'; g.textAlign = 'left';
-  g.fillText(room.open ? 'open air, grass below' : `${room.dims[0]} × ${room.dims[1]} × ${room.dims[2]} m · floor ${S.MATERIALS[room.walls.floor].name.toLowerCase()}`, 8, 12);
+  g.fillText(room.open ? `open air · ground ${S.MATERIALS[room.walls.floor].name.toLowerCase()}${room.trees ? ' · trunks every ~' + room.trees.spacing + ' m' : ''}`
+    : room.nature && room.walls.ceiling === 'open' ? `rock walls ${room.dims[0]} m apart · open sky · ground ${S.MATERIALS[room.walls.floor].name.toLowerCase()}`
+    : `${room.dims[0]} × ${room.dims[1]} × ${room.dims[2]} m · floor ${S.MATERIALS[room.walls.floor].name.toLowerCase()}`, 8, 12);
   // banjo, player and mics
   const sc = sceneObject();
   const pl = S.placement(sc);
@@ -324,9 +336,13 @@ function drawRoomMap() {
   }
   // stats
   const E = S.eyring(room);
-  const rt = room.open ? null : (E.rt[2] + E.rt[3]) / 2;
+  const rt = room.tail ? (room.tail.rt[2] + room.tail.rt[3]) / 2 : room.open ? null : (E.rt[2] + E.rt[3]) / 2;
   const rc = rt ? 0.057 * Math.sqrt(2 * E.V / rt) : null;
-  $('roomInfo').textContent = room.open ? `No walls: only the ground reflects. Nearest mic ${dmin.toFixed(2)} m from the head.`
+  const gpx = sc.guitar.pos[0], near = room.walls.x1 === 'open' ? gpx : Math.min(gpx, room.dims[0] - gpx);
+  const echo = room.nature && !room.open && room.walls.ceiling === 'open' ? ` · first echo after ${2 * near / 343 < 0.1 ? Math.round(2 * near / 0.343) + ' ms' : (2 * near / 343).toFixed(2) + ' s'}` : '';
+  $('roomInfo').textContent = room.tail ? `Scattering off the trees: reverb time ${rt.toFixed(1)} s (500 Hz–1 kHz), mostly in the treble. Nearest mic ${dmin.toFixed(2)} m from the head.`
+    : room.open ? `No walls: only the ground reflects. Nearest mic ${dmin.toFixed(2)} m from the head.`
+    : echo ? `Open sky; the rock faces send the sound back${echo}. Nearest mic ${dmin.toFixed(2)} m from the head.`
     : `Reverb time ${rt.toFixed(2)} s (500 Hz–1 kHz) · critical distance ${rc.toFixed(1)} m · nearest mic ${dmin.toFixed(2)} m`;
 }
 

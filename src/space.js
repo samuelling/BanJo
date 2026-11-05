@@ -35,6 +35,16 @@ const MATERIALS = {
   audience:   { name: 'Seated audience', a: [0.60, 0.74, 0.88, 0.96, 0.93, 0.85, 0.80] },
   books:      { name: 'Bookshelves', a: [0.30, 0.40, 0.40, 0.30, 0.30, 0.30, 0.30] },
   grass:      { name: 'Grass', a: [0.10, 0.25, 0.45, 0.60, 0.70, 0.75, 0.78] },
+  // natural ground and rock (typical published ranges; outdoor grounds are porous, so they absorb more as frequency rises)
+  leafLitter: { name: 'Leaf litter', a: [0.15, 0.35, 0.55, 0.70, 0.75, 0.80, 0.80] },
+  needles:    { name: 'Pine needles', a: [0.10, 0.25, 0.45, 0.60, 0.70, 0.75, 0.75] },
+  snow:       { name: 'Fresh snow', a: [0.45, 0.75, 0.90, 0.95, 0.95, 0.95, 0.95] },
+  sand:       { name: 'Dry sand', a: [0.10, 0.25, 0.35, 0.45, 0.55, 0.60, 0.65] },
+  water:      { name: 'Still water', a: [0.01, 0.01, 0.01, 0.015, 0.02, 0.02, 0.025] },
+  sandstone:  { name: 'Sandstone', a: [0.02, 0.03, 0.04, 0.05, 0.06, 0.07, 0.08] },
+  granite:    { name: 'Granite cliff', a: [0.01, 0.01, 0.02, 0.02, 0.03, 0.03, 0.04] },
+  limestone:  { name: 'Wet limestone', a: [0.02, 0.02, 0.03, 0.03, 0.04, 0.05, 0.06] },
+  rubble:     { name: 'Rock rubble', a: [0.05, 0.08, 0.12, 0.18, 0.22, 0.25, 0.28] },
   open:       { name: 'Open air', a: [1, 1, 1, 1, 1, 1, 1] }
 };
 // air absorption, energy attenuation coefficient m (1/m) at 20 C, 50% RH (ISO 9613-1)
@@ -57,7 +67,24 @@ const ROOMS = {
               extra: [{ mat: 'audience', area: 760, on: 'floor' }, { mat: 'audience', area: 160, on: 'x0' }, { mat: 'audience', area: 160, on: 'x1' }], scatter: 0.6 },
   church:   { name: 'Stone church', dims: [42, 16, 18], walls: { floor: 'stone', ceiling: 'stone', x0: 'stone', x1: 'glass', y0: 'stone', y1: 'stone' },
               extra: [{ mat: 'pews', area: 500, on: 'floor' }, { mat: 'audience', area: 110, on: 'floor' }, { mat: 'woodPanel', area: 150, on: 'y1' }], scatter: 0.45 },
-  outdoors: { name: 'Outdoors on grass', dims: [200, 200, 200], walls: { floor: 'grass', ceiling: 'open', x0: 'open', x1: 'open', y0: 'open', y1: 'open' }, extra: [], scatter: 0.2, open: true }
+  outdoors: { name: 'Outdoors on grass', dims: [200, 200, 200], walls: { floor: 'grass', ceiling: 'open', x0: 'open', x1: 'open', y0: 'open', y1: 'open' }, extra: [], scatter: 0.2, open: true, nature: true },
+  // ---- natural places ----
+  // Forests: the ground reflects, then sound scattered off trunks (single-scattering cylinders, after Kaneko & Gamper
+  // 2021) and foliage fills a reverberant tail. Albert et al. (2015) measured T60 around 2 s in most northeastern US
+  // stands, ~1.2 s in a deciduous stand and a pruned spruce grid, ~3 s over very rough ground; scattering from trees
+  // is mostly above ~1 kHz (Yang et al. 2013), so the tail is weak in the bass.
+  forest:   { name: 'Deciduous forest, summer', dims: [200, 200, 200], walls: { floor: 'leafLitter', ceiling: 'open', x0: 'open', x1: 'open', y0: 'open', y1: 'open' }, extra: [], scatter: 0.3, open: true, nature: true,
+              trees: { n: 260, r: [0.08, 0.30], spacing: 4.5, leaves: true }, tail: { rt: [0.9, 1.1, 1.3, 1.4, 1.4, 1.3, 1.0], lvl: [0.05, 0.12, 0.3, 0.6, 0.85, 1.0, 0.9], V: 3500, onset: 0.02 } },
+  pines:    { name: 'Pine forest', dims: [200, 200, 200], walls: { floor: 'needles', ceiling: 'open', x0: 'open', x1: 'open', y0: 'open', y1: 'open' }, extra: [], scatter: 0.3, open: true, nature: true,
+              trees: { n: 320, r: [0.12, 0.35], spacing: 3.8, leaves: false }, tail: { rt: [1.2, 1.5, 1.8, 2.0, 2.1, 2.0, 1.6], lvl: [0.06, 0.15, 0.35, 0.65, 0.9, 1.0, 0.85], V: 3000, onset: 0.015 } },
+  winterwood: { name: 'Winter woods in snow', dims: [200, 200, 200], walls: { floor: 'snow', ceiling: 'open', x0: 'open', x1: 'open', y0: 'open', y1: 'open' }, extra: [], scatter: 0.3, open: true, nature: true,
+              trees: { n: 200, r: [0.08, 0.30], spacing: 5.5, leaves: false }, tail: { rt: [0.7, 0.9, 1.1, 1.2, 1.2, 1.1, 0.9], lvl: [0.03, 0.08, 0.2, 0.4, 0.55, 0.6, 0.5], V: 6000, onset: 0.025 } },
+  snowfield:{ name: 'Open snowfield', dims: [200, 200, 200], walls: { floor: 'snow', ceiling: 'open', x0: 'open', x1: 'open', y0: 'open', y1: 'open' }, extra: [], scatter: 0.2, open: true, nature: true },
+  // Rock: open sky and open ends, so only the rock faces reflect; image sources run long enough to keep the echoes
+  slot:     { name: 'Slot canyon, sandstone', dims: [3.2, 80, 30], walls: { floor: 'sand', ceiling: 'open', x0: 'sandstone', x1: 'sandstone', y0: 'open', y1: 'open' }, extra: [], scatter: 0.35, tMix: 0.25, nature: true },
+  canyon:   { name: 'Canyon, walls 40 m apart', dims: [40, 400, 120], walls: { floor: 'sand', ceiling: 'open', x0: 'sandstone', x1: 'sandstone', y0: 'open', y1: 'open' }, extra: [], scatter: 0.25, tMix: 1.0, nature: true },
+  lake:     { name: 'Mountain lake, cliff across the water', dims: [140, 600, 300], walls: { floor: 'water', ceiling: 'open', x0: 'granite', x1: 'open', y0: 'open', y1: 'open' }, extra: [], scatter: 0.15, tMix: 0.9, nature: true },
+  cave:     { name: 'Limestone cave', dims: [16, 34, 9], walls: { floor: 'rubble', ceiling: 'limestone', x0: 'limestone', x1: 'limestone', y0: 'limestone', y1: 'limestone' }, extra: [], scatter: 0.7, nature: true }
 };
 
 // ---------------- microphones ----------------
@@ -406,6 +433,37 @@ function gauss(r) { let u = 0; for (let i = 0; i < 6; i++) u += r(); return (u -
 
 // Build stereo IRs (reflections + late tail, no direct sound) for the top ('front') and back source sides.
 // scene: { room (key or object), guitar: {pos, yaw}, mics (setup key or object), hold, scale }
+// Trunks as single-scattering cylinders (Kaneko & Gamper 2021): every trunk within reach adds one scattered arrival,
+// delayed by source -> trunk -> mic, spreading 1/(d1 d2). A cylinder of radius a scatters weakly while ka < 1 (Rayleigh,
+// ~ (ka)^2 in power) and like a mirror strip above; foliage adds a little more at the top. Trunks are placed at random
+// with the stand's mean spacing, but none closer than ~1.5 m to the player.
+function scatterTrees(out, room, src, mics, pl, held, scene, sr, N, cache) {
+  const T = room.trees, r = rng32(4242), centre = src.front;
+  const R = Math.min(60, T.spacing * Math.sqrt(T.n / Math.PI));
+  for (let i = 0; i < T.n; i++) {
+    const ang = r() * 2 * Math.PI, rad = Math.max(1.5, R * Math.sqrt(r()));
+    const tx = centre[0] + rad * Math.cos(ang), ty = centre[1] + rad * Math.sin(ang), a = T.r[0] + (T.r[1] - T.r[0]) * r();
+    for (const side of ['front', 'back']) {
+      const S = src[side], tp = [tx, ty, Math.max(0.5, S[2])];
+      const d1 = len(sub(tp, S)), dep = pl.toLocalDir(nrm(sub(tp, S)));
+      for (let mi = 0; mi < Math.min(2, mics.length); mi++) {
+        const M = mics[mi], d2 = len(sub(M.room, tp)), t = (d1 + d2) / C;
+        if (t * sr >= N - FIRN) continue;
+        const arr = pl.toLocalDir(nrm(sub(tp, M.room)));
+        const g = new Array(7);
+        for (let b = 0; b < 7; b++) {
+          const ka = 2 * Math.PI * BANDS[b] / C * a;
+          const eff = Math.sqrt(Math.min(1, ka * ka)) * Math.sqrt(a) * 0.9 + (T.leaves ? 0.04 * Math.min(1, BANDS[b] / 2000) : 0);
+          g[b] = eff / (d1 * d2) * Math.exp(-AIR_M[b] * (d1 + d2) / 2) * sourceGain(side, dep, b, held, scene.rawRadiation) * micGain(M, arr, b);
+        }
+        const amp = Math.max(...g); if (amp < 1e-6) continue;
+        const h = bandFir(g.map(x => x / amp), sr, cache), at = Math.round(t * sr), buf = out[side][mi];
+        for (let k = 0; k < FIRN; k++) { const j = at + k - FIRN / 2; if (j >= 0 && j < N) buf[j] += h[k] * amp; }
+      }
+    }
+  }
+}
+
 function buildIRs(scene, sr) {
   const room = typeof scene.room === 'string' ? ROOMS[scene.room] : scene.room;
   const E = eyring(room);
@@ -416,9 +474,11 @@ function buildIRs(scene, sr) {
   const rg = regionsFor(scene.geom);
   const src = { front: pl.toRoom(rg[0].p), back: pl.toRoom(rg[6].p) };
   const rtMax = Math.max(...E.rt);
-  const dur = room.open ? 0.25 : Math.min(scene.maxDur || 6, 6, Math.max(0.3, rtMax * 1.15));   // maxDur: Light CPU mode caps the tail
+  const tailRt = room.tail ? Math.max(...room.tail.rt) : 0;
+  const dur = room.tail ? Math.min(scene.maxDur || 6, 6, tailRt * 1.15 + 0.1)
+    : room.open ? 0.25 : Math.min(scene.maxDur || 6, 6, Math.max(0.3, rtMax * 1.15, (room.tMix || 0) + 0.3));   // maxDur: Light CPU mode caps the tail
   const N = Math.ceil(dur * sr) + FIRN;
-  const tMix = room.open ? 0.25 : Math.min(0.12, Math.max(0.035, Math.sqrt(E.V) / 1000 * 1.6));
+  const tMix = room.open ? 0.25 : room.tMix ? Math.min(room.tMix, dur) : Math.min(0.12, Math.max(0.035, Math.sqrt(E.V) / 1000 * 1.6));
   const scat = room.scatter ?? 0.4;
   const beta = {}; for (const k in E.alpha) beta[k] = E.alpha[k].map(a => Math.sqrt(Math.max(0, 1 - a)));
   const out = { front: [new Float32Array(N), new Float32Array(N)], back: [new Float32Array(N), new Float32Array(N)], rt: E.rt, V: E.V, tMix };
@@ -468,13 +528,14 @@ function buildIRs(scene, sr) {
       }
     }
   }
-  if (room.open) return out;
+  if (room.trees) scatterTrees(out, room, src, mics, pl, held, scene, sr, N, cache);
+  if (room.open && !room.tail) return out;
   // ----- late tail: per-band noise with Eyring decay, energy arrival rate 4 pi c / V (relative to a 1/d direct sound),
   // ramping in as scattering turns specular energy diffuse, and fully after the mixing time
   const hop = 256, NF = 512;
   const win = new Float64Array(NF); for (let i = 0; i < NF; i++) win[i] = Math.sin(Math.PI * (i + 0.5) / NF); // sqrt-hann pair
   const nFrames = Math.ceil(N / hop);
-  const meanFree = 4 * E.V / E.S;
+  const meanFree = room.tail ? 10 : 4 * E.V / E.S;
   // inter-mic coherence of the diffuse tail: sin(kd)/(kd) for spaced omnis (spacing d); coincident directional pairs
   // keep partial coherence from their overlapping patterns
   const m0 = mics[0], m1 = mics[1] || mics[0];
@@ -500,12 +561,16 @@ function buildIRs(scene, sr) {
     for (let fI = 0; fI < nFrames; fI++) {
       const t = (fI * hop + NF / 2) / sr;
       const nRef = C * t / meanFree;
-      const ramp = t >= tMix ? 1 : Math.max(0, 1 - Math.pow(1 - scat, nRef)) * 0.9 + 0.1 * Math.min(1, t / tMix) ** 2;
+      const TL = room.tail;
+      const ramp = TL ? Math.min(1, Math.max(0, (t - TL.onset) / 0.06)) ** 2
+        : t >= tMix ? 1 : Math.max(0, 1 - Math.pow(1 - scat, nRef)) * 0.9 + 0.1 * Math.min(1, t / tMix) ** 2;
       for (let mi = 0; mi < nm; mi++) {
         const P = mics[mi].ear ? { diffuse: 0.9 } : (PATTERNS[mics[mi].pattern] || PATTERNS.omni);
         for (let b = 0; b < 7; b++) {
           // energy per second 4 pi c / V * exp(-13.8 t / RT) (integrates to Barron's 16 pi / A); per sample / sr
-          const e = 4 * Math.PI * C / E.V * Math.exp(-13.82 * t / E.rt[b]) * sidePow[b] * P.diffuse / sr;
+          const e = room.tail
+            ? 4 * Math.PI * C / room.tail.V * room.tail.lvl[b] * Math.exp(-13.82 * t / room.tail.rt[b]) * sidePow[b] * P.diffuse / sr
+            : 4 * Math.PI * C / E.V * Math.exp(-13.82 * t / E.rt[b]) * sidePow[b] * P.diffuse / sr;
           gains[b] = Math.sqrt(e * ramp);
         }
         bandCurve(gains, NF, sr, curves[mi]);
@@ -526,7 +591,7 @@ function buildIRs(scene, sr) {
       }
     }
   }
-  if (scene.maxDur && rtMax * 1.15 > scene.maxDur) {   // a capped tail fades out over its last 0.5 s instead of stopping
+  if (scene.maxDur && (room.tail ? tailRt : rtMax) * 1.15 > scene.maxDur) {   // a capped tail fades out over its last 0.5 s instead of stopping
     const nf = Math.min(N, Math.round(0.5 * sr));
     for (const side of ['front', 'back']) for (const ch of out[side]) for (let i = 0; i < nf; i++) ch[N - nf + i] *= 0.5 + 0.5 * Math.cos(Math.PI * i / nf);
   }
