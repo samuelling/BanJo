@@ -1,0 +1,150 @@
+<title>BanJo</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<meta name="description" content="A physically modelled five-string banjo for the browser: drumhead, bridge and resonator computed live, with Scruggs rolls, clawhammer and melodic picking hands.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Figtree:wght@400;500;600&family=JetBrains+Mono:wght@400;500&family=Young+Serif&display=swap">
+<style>/*@@STYLE@@*/</style>
+
+<div class="wrap">
+  <header class="top">
+    <div class="brand">
+      <h1>BanJo</h1>
+      <span class="sub">physical-model five-string · drumhead, bridge &amp; picking hands</span>
+    </div>
+    <div class="top-actions">
+      <span class="status" title="MIDI input"><span id="midiDot" class="dot"></span><span id="midiStatus">MIDI off</span></span>
+      <button id="recBtn" class="btn rec" aria-pressed="false" type="button">● Record</button>
+      <button id="panicBtn" class="btn" type="button" title="Silence every string">Mute all</button>
+    </div>
+  </header>
+
+  <section class="banjo-card" aria-label="Banjo">
+    <canvas id="banjo"></canvas>
+    <div class="banjo-shape" id="shapeText">0000</div>
+    <div class="banjo-legend">5th string on top, as you see it playing · tap a string to pick it · tap the neck to fret · tap the head to hear it</div>
+    <div class="start-overlay" id="startOverlay">
+      <button class="btn primary" id="startBtn" type="button">Tap to start the banjo</button>
+      <small>Sound starts after a tap, as browsers require.</small>
+    </div>
+  </section>
+
+  <section class="play" aria-label="Chords and right hand">
+    <div class="chords" id="chords"></div>
+    <div class="hand-quick">
+      <div class="seg big" data-opt="kind" id="kindSeg">
+        <button data-v="roll" type="button">Scruggs</button><button data-v="claw" type="button">Clawhammer</button><button data-v="vamp" type="button">Backup</button><button data-v="free" type="button">Free notes</button>
+      </div>
+      <select id="handStyle" aria-label="Pattern"></select>
+    </div>
+  </section>
+
+  <section class="keys-card" aria-label="Keyboard">
+    <div class="keys-head">
+      <span class="lbl">Keyboard — hold a chord and the right hand plays it. Computer keys <span class="kbd">A W S E D F T G Y H U J K</span>, octave <span class="kbd">Z</span> <span class="kbd">X</span>, hold <span class="kbd">Space</span>, chords <span class="kbd">1</span>–<span class="kbd">0</span>, choke <span class="kbd">C</span>.</span>
+      <div class="toggles">
+        <button class="btn" id="octDown" type="button">Oct −</button>
+        <span class="status" id="octLabel">C3</span>
+        <button class="btn" id="octUp" type="button">Oct +</button>
+      </div>
+    </div>
+    <div class="keys-scroll"><div class="keys" id="keys"></div></div>
+  </section>
+
+  <section class="tray">
+    <div class="group">
+      <h2>Right hand</h2>
+      <p class="hint">Thumb and fingers, picks or bare, and how the pattern feels.</p>
+      <div class="row wide"><label>Picks</label><div class="seg" data-opt="picks"><button data-v="picks" type="button">Thumb + fingerpicks</button><button data-v="bare" type="button">Bare fingers / nail</button></div></div>
+      <div class="row wide" id="fpRow"><label for="fingerPick">Fingerpicks</label><select id="fingerPick"></select></div>
+      <div class="row wide" id="tpRow"><label for="thumbPick">Thumbpick</label><select id="thumbPick"></select></div>
+      <div class="row"><label for="bpm">Tempo</label><input id="bpm" type="range" min="50" max="280" value="132"><output id="bpmOut">132</output></div>
+      <div class="row"><label for="swing">Swing</label><input id="swing" type="range" min="0" max="100" value="0"><output id="swingOut">style</output></div>
+      <div class="row"><label for="skill">Player skill</label><input id="skill" type="range" min="0" max="100" value="65"><output id="skillOut">65</output></div>
+      <div class="row"><label for="humanize">Humanize</label><input id="humanize" type="range" min="0" max="100" value="60"><output id="humanizeOut">60</output></div>
+      <div class="row"><label for="licks">Licks</label><input id="licks" type="range" min="0" max="100" value="30"><output id="licksOut">30</output></div>
+      <div class="row"><label for="spot">Picking spot</label><input id="spot" type="range" min="0" max="100" value="0"><output id="spotOut">style</output></div>
+      <div class="row"><label for="strength">Strength</label><input id="strength" type="range" min="10" max="100" value="62"><output id="strengthOut">62</output></div>
+      <p class="note">Licks: the thumb sometimes slides or hammers into a fretted chord tone, or hammers an open string up two frets and pulls back off. Picking spot runs from right by the bridge (bright, snappy) to over the neck joint (round, the clawhammer spot).</p>
+    </div>
+
+    <div class="group">
+      <h2>Left hand</h2>
+      <p class="hint">How your notes become banjo shapes, drones and slides.</p>
+      <div class="row wide"><label>Voicing</label><div class="seg" data-opt="voicing"><button data-v="banjo" type="button">Banjo shape</button><button data-v="played" type="button">As played</button></div></div>
+      <div class="row wide"><label>Drone</label><div class="seg" data-opt="drone"><button data-v="open" type="button">Open 5th, always</button><button data-v="follow" type="button">Follows the chord</button></div></div>
+      <div class="row wide"><label>Free notes</label><div class="seg" data-opt="freeStyle"><button data-v="melodic" type="button">Melodic</button><button data-v="single" type="button">Single-string</button></div></div>
+      <div class="row wide"><label for="legatoMode">Legato</label><select id="legatoMode"><option value="auto">Auto: hammer/pull close, slide wider</option><option value="slide">Slides</option><option value="hammer">Hammer-ons &amp; pull-offs</option><option value="off">Off (pick every note)</option></select></div>
+      <div class="row"><label for="slide">Slide speed</label><input id="slide" type="range" min="0" max="100" value="50"><output id="slideOut">50</output></div>
+      <div class="row"><label for="gather">Chord window</label><input id="gather" type="range" min="5" max="60" value="18"><output id="gatherOut">18 ms</output></div>
+      <div class="row"><label for="keyvel">Key strength</label><input id="keyvel" type="range" min="10" max="100" value="72"><output id="keyvelOut">72</output></div>
+      <p class="note">In Free notes, Melodic spreads a scale across strings so the notes ring into each other, the 5th string included; Single-string keeps the hand in one position and alternates thumb and index. Hold one note and press another: a hammer-on, pull-off or slide. Pitch bend (or the <span class="kbd">C</span> key) chokes the last string up to a whole step.</p>
+    </div>
+
+    <div class="group">
+      <h2>Banjo</h2>
+      <p class="hint">A drum with a neck. Every part below changes the physics, not a filter.</p>
+      <div class="row wide"><label for="preset">Banjo</label><select id="preset"></select></div>
+      <div class="row wide"><label for="tuning">Tuning</label><select id="tuning"></select></div>
+      <div class="row"><label for="capo">Capo</label><input id="capo" type="range" min="0" max="7" value="0"><output id="capoOut">none</output></div>
+      <div class="row wide"><label>5th string</label><div class="seg" data-opt="spikeMode"><button data-v="follow" type="button">Spiked with the capo</button><button data-v="open" type="button">Left open</button></div></div>
+      <div class="row"><label for="dd">Head tension</label><input id="dd" type="range" min="80" max="95" step="0.5" value="90"><output id="ddOut">DD 90</output></div>
+      <div class="toggles"><button class="btn" id="tapHead" type="button">Tap the head</button><span class="note" id="potInfo">&nbsp;</span></div>
+      <div class="row wide"><label for="head">Head</label><select id="head"></select></div>
+      <div class="row wide"><label for="headD">Head size</label><select id="headD"><option value="0.268">11 inch</option><option value="0.293">12 inch</option></select></div>
+      <div class="row wide"><label for="ring">Tone ring</label><select id="ring"></select></div>
+      <div class="row wide"><label>Back</label><div class="seg" data-opt="back"><button data-v="resonator" type="button">Resonator</button><button data-v="open" type="button">Open back</button></div></div>
+      <div class="row"><label for="bmass">Bridge mass</label><input id="bmass" type="range" min="12" max="35" value="22"><output id="bmassOut">2.2 g</output></div>
+      <div class="row wide"><label for="bheight">Bridge height</label><select id="bheight"><option value="0.0127">1/2 inch</option><option value="0.0159">5/8 inch</option><option value="0.0175">11/16 inch</option></select></div>
+      <div class="row"><label for="brk">Tailpiece angle</label><input id="brk" type="range" min="2" max="22" value="13"><output id="brkOut">13°</output></div>
+      <div class="row wide"><label for="stuff">Behind the head</label><select id="stuff"></select></div>
+      <div class="row wide"><label for="hold">Holding</label><select id="hold"><option value="stand">On a stand</option><option value="lap">In the lap</option><option value="belly">Back against the belly</option></select></div>
+      <div class="row wide"><label for="strset">Strings</label><select id="strset"></select></div>
+      <div class="row"><label for="bright">String age</label><input id="bright" type="range" min="0" max="100" value="60"><output id="brightOut">fresh</output></div>
+      <div class="row"><label for="symp">Sympathetic</label><input id="symp" type="range" min="0" max="100" value="50"><output id="sympOut">50</output></div>
+      <div class="row"><label for="noise">Pick noise</label><input id="noise" type="range" min="0" max="100" value="50"><output id="noiseOut">50</output></div>
+      <div class="row"><label for="vol">Volume</label><input id="vol" type="range" min="0" max="100" value="75"><output id="volOut">75</output></div>
+    </div>
+
+    <div class="group space-group">
+      <h2>Mics &amp; room</h2>
+      <p class="hint">Drag the banjo around the room. Every reflection is traced from the walls to the mics.</p>
+      <canvas id="roomMap" aria-label="Room map: drag the banjo"></canvas>
+      <div class="note" id="roomInfo">&nbsp;</div>
+      <div class="row wide"><label for="micSetup">Mics</label><select id="micSetup"></select></div>
+      <div class="row wide"><label for="micPattern">Pattern</label>
+        <select id="micPattern"><option value="default">As set up</option><option value="omni">Omni</option><option value="cardioid">Cardioid</option><option value="supercardioid">Supercardioid</option><option value="fig8">Figure-8</option></select></div>
+      <div class="row"><label for="micDist">Mic distance</label><input id="micDist" type="range" min="40" max="400" value="100"><output id="micDistOut">x1.0</output></div>
+      <div class="row wide"><label for="roomSel">Room</label><select id="roomSel"></select></div>
+      <div class="row"><label for="roomTrim">Room level</label><input id="roomTrim" type="range" min="-24" max="12" value="0"><output id="roomTrimOut">0 dB</output></div>
+      <div class="toggles"><button class="btn" id="turnGuitar" type="button">Turn banjo 45°</button></div>
+    </div>
+
+    <div class="group">
+      <h2>MIDI &amp; recording</h2>
+      <div class="row wide"><label for="midiIn">Input</label><select id="midiIn"><option value="all">All inputs</option></select></div>
+      <p class="note" id="midiNote">Connect a MIDI keyboard and it is picked up automatically. Sustain pedal holds the pattern, pitch bend chokes the last string, mod wheel sets how often licks happen, MIDI clock sets the tempo.</p>
+      <div class="row wide"><label for="cpuMode">CPU</label><select id="cpuMode"><option value="light">Light (recommended)</option><option value="full">Full detail</option></select></div>
+      <div class="rec-out" id="recOut"><span class="note">Record captures the banjo's exact output as a 48 kHz WAV, ready to compare against a real banjo.</span></div>
+    </div>
+  </section>
+
+  <section class="group science">
+    <details>
+      <summary>How the sound is made</summary>
+      <p><b>A drum with a neck.</b> A guitar's strings drive a wooden plate; a banjo's drive a drumhead, a sheet of film about 0.18 mm thick and a few grams heavy, stretched like a trampoline. That one difference is most of the banjo's voice. The head is so light that the bridge moves about ten times more easily than a guitar's, so string energy pours out fast: loud, bright attacks and short notes.</p>
+      <p><b>The head.</b> Its vibration patterns are the classic drum modes, rings and spokes from Bessel functions, raised by tension and lowered by the air that has to move with the head. Calibrated so a bare 11-inch head over an open pot rings its lowest mode at 290 Hz, as measured on a real banjo (Woodhouse, Politzer &amp; Mansour). The tension slider reads like a DrumDial; tap the head to hear where you've set it.</p>
+      <p><b>The bridge.</b> A maple bar on three feet, standing on the head. It bounces, rocks end to end, bends and sways, and the strings press on it at their own places: the 1st and 5th strings rock it most, the 3rd not at all, so every string hears a different bridge. Its mass sitting on the springs of the strings and the stretched head makes the banjo's main formant, around 500–800 Hz; the rocking legs add a bump near 3 kHz and the bridge's bending another near 5 kHz. Lighter bridge: brighter. Steeper tailpiece angle: more down-force, stiffer springs, a higher formant.</p>
+      <p><b>Behind the head.</b> Open back: the air in the pot is a short pipe closed by the head; it pumps out of the back, and a belly against it muffles it. Resonator: a closed box whose air leaves through the gap around the flange, splitting the head's lowest mode in two and throwing the sound forward.</p>
+      <p><b>Tone ring and rim.</b> A heavy bell-bronze ring holds the head's edge firm, so less energy leaks into the wood (longer, brighter notes) and adds a faint metallic ring of its own. A wood rim loses more.</p>
+      <p><b>Strings.</b> Five steel strings, the short 5th starting at its peg at the 5th fret. Each is a sum of its own modes with measured losses; how fast each harmonic drains depends on the bridge's motion at that exact frequency. The strings' tension wobbles as they vibrate, and over the break angle that pushes down on the bridge too (Politzer's string-stretching effect).</p>
+      <p><b>Picks.</b> Metal fingerpicks and a plastic thumbpick are small cantilevers that the string slides off; the fingers pull up, the thumb pushes down. In clawhammer the back of the nail falls down through the string toward the head, part pluck, part strike, and the thumb catches the 5th string.</p>
+      <p><b>The hands.</b> Rolls are the classic Scruggs cells of eight notes; clawhammer is bum-ditty, double thumbing and drop thumb; backup chops on 2 and 4. Timing drifts and scatters like a real player's, fingers can't repeat faster than they recover, and the thumb leads the beat.</p>
+      <p><b>What's estimated.</b> Head-tension mapping, tone-ring modes, the bridge's internal stiffness and the right-hand timing numbers are physics-based estimates, not banjo measurements. Record a take and compare it with a real banjo using the repo's analysis script to tune them.</p>
+    </details>
+  </section>
+</div>
+
+<script id="dsp-src">/*@@DSP@@*/</script>
+<script>/*@@HAND@@*/</script>
+<script>/*@@APP@@*/</script>
