@@ -2424,7 +2424,7 @@ class BanjoEngine {
     const S = this.strings, B = this.body, nb = B.nr;
     const b0 = B.b0, a1 = B.a1, a2 = B.a2, z1 = B.z1, z2 = B.z2, pz = B.pz, pp = B.pp, pb = B.pb, pu = B.pu, ew = B.ew;
     const gy = 0.3, bodyAmt = this.params.body, gain = this.params.gain * this.P.out;
-    const symp = this.params.sympathetic * 5e-6;   // bridge compliance seen by the other strings, m/N (banjo: ~4x a guitar's)
+    const symp = this.params.sympathetic * 0.8e-6;   // bridge compliance seen by the other strings, m/N (capped: the string-bridge-string loop must stay passive)
     const sr = this.sr, CD = 64, CM = 127;
     const stDecay = Math.exp(-1 / (0.5 * sr));
     const lpC = 1 - Math.exp(-TAU * 3000 / sr), hpC = Math.exp(-TAU * 60 / sr);
