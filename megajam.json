@@ -1,0 +1,10 @@
+{
+  "megajam": 1,
+  "id": "banjo",
+  "name": "BanJo",
+  "by": "Sam Ling",
+  "private": false,
+  "instruments": [
+    { "id": "banjo", "file": "megajam/banjo.js", "name": "BanJo", "family": "Physically modelled five-string banjo", "blurb": "Five steel strings on a drumhead, with picking hands: Scruggs rolls, clawhammer and backup chop on the band's beat." }
+  ]
+}
