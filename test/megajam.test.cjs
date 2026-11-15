@@ -6,10 +6,10 @@
 //   - it makes sound (both browsers), the pot and the room get built, and the arpeggiator is offered too
 //   - no page errors
 // Needs MEGAjam (https://github.com/samuelling/JamJam) running at localhost:8787 (node server/dev.js) and
-// Playwright; this folder is served on 8793 by MEGAjam's tools/serve-library.py:
-//   python3 ../JamJam/tools/serve-library.py . --port 8793 &      node test/megajam.test.cjs
+// Playwright; this folder is served on 8794 by MEGAjam's tools/serve-library.py:
+//   python3 ../JamJam/tools/serve-library.py . --port 8794 &      node test/megajam.test.cjs
 const { chromium } = require('playwright');
-const BASE = process.env.MEGAJAM || 'http://localhost:8787/', LIB = process.env.LIB || 'http://localhost:8793/';
+const BASE = process.env.MEGAJAM || 'http://localhost:8787/', LIB = process.env.LIB || 'http://localhost:8794/';
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 let failures = 0;
 const check = (ok, msg) => { console.log((ok ? 'PASS ' : 'FAIL ') + msg); if (!ok) failures++; };
