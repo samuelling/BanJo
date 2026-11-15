@@ -54,6 +54,10 @@ Resulting bridge admittance (3rd string, bluegrass setup): about −27 dB re 1 m
 - The picture: tap a string on the head to pick it, swipe across the strings to brush, tap the neck to fret a string, and tap the bare head to hear it (useful when setting tension).
 - Record captures the exact output as a 48 kHz WAV.
 
+## In MEGAjam
+
+BanJo is also a [MEGAjam](https://github.com/samuelling/JamJam) instrument (`megajam.json`, `megajam/banjo.js`), so a band can jam with it online. The adapter runs the same `src/` files unchanged. The hands run on a clock in room time, with random numbers seeded from that time, and each pluck carries a seed. So every bandmate's browser makes exactly the same banjo from the same notes. With the room's tempo on, a roll starts on the room's eighth-note grid at the right step of the bar. The pot and the room are built in a worker. Its knobs: banjo, tuning, capo, strings, right hand (every roll, clawhammer and backup style, or free notes), voicing, drone, skill, humanize, licks, strength, place, mics, room level, level. Pitch bend chokes the last string. `test/megajam.test.cjs` checks it in two browsers against a local MEGAjam.
+
 ## Calibration loop
 
 `test/` renders through the same engine offline in Node and compares against real recordings. This is the same workflow as Acoustic:
